@@ -25,6 +25,37 @@ print(ids)
 
 exit()
 
+
+
+async def send_messages(ids):
+    # Create a producer client to send messages to the event hub
+    producer = EventHubProducerClient.from_connection_string(conn_str=connection_str, eventhub_name=eventhub_name)
+
+    async def send_message_to_eventhub(id):
+        # Create a batch
+        event_data_batch = await producer.create_batch()
+
+        # Create the message
+        data = {
+		"Key": id
+        }
+
+        # Add the message to the batch
+        event_data_batch.add(EventData(json.dumps(data)))
+
+        # Send the batch of messages to the event hub
+        await producer.send_batch(event_data_batch)
+
+    async with producer:
+        coroutines = [send_message_to_eventhub(id) for id in ids]
+        await asyncio.gather(*coroutines)
+
+# Call the function
+loop = asyncio.get_event_loop()
+loop.run_until_complete(send_messages(ids))
+loop.close()
+
+'''
 async def send_message_to_eventhub(id):
     # Create a producer client to send messages to the event hub
     producer = EventHubProducerClient.from_connection_string(conn_str=connection_str, eventhub_name=eventhub_name)
@@ -53,33 +84,4 @@ coroutines = [send_message_to_eventhub(id) for id in ids]
 loop = asyncio.get_event_loop()
 loop.run_until_complete(asyncio.gather(*coroutines))
 loop.close()
-
-async def send_messages(ids):
-    # Create a producer client to send messages to the event hub
-    producer = EventHubProducerClient.from_connection_string(conn_str=connection_str, eventhub_name=eventhub_name)
-
-    async def send_message_to_eventhub(id):
-        # Create a batch
-        event_data_batch = await producer.create_batch()
-
-        # Create the message
-        data = {
-           
-            "Key": id
-     
-        }
-
-        # Add the message to the batch
-        event_data_batch.add(EventData(json.dumps(data)))
-
-        # Send the batch of messages to the event hub
-        await producer.send_batch(event_data_batch)
-
-    async with producer:
-        coros = [send_message_to_eventhub(id) for id in ids]
-        await asyncio.gather(*coros)
-
-# Call the function
-loop = asyncio.get_event_loop()
-loop.run_until_complete(send_messages(ids))
-loop.close()
+'''
